@@ -1,5 +1,6 @@
 package com.satia.productDetials;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -42,6 +43,7 @@ import com.itextpdf.text.PageSize;
 import com.itextpdf.text.pdf.PdfWriter;
 import com.satia.FinalScreenProduct;
 import com.satia.R;
+import com.satia.SucessActivity;
 import com.satia.loginActivity.LoginActivity;
 import com.satia.mainActivity.MainActivity;
 import com.satia.networks.RetrofitClientInstance;
@@ -88,8 +90,8 @@ public class FinalScreenReemProduct extends AppCompatActivity {
     RecyclerView recyclerView;
     @BindView(R.id.imgBack)
     ImageView backbutton;
-    @BindView(R.id.create_pdf)
-    Button create_pdf;
+   // @BindView(R.id.create_pdf)
+    //Button create_pdf;
     FinalListReelAdapter adapter;
     ArrayList<FinalProductReelModel> list;
     ArrayList<OnlyshowReelModel>onlyshowReelModelArrayList;
@@ -103,7 +105,7 @@ public class FinalScreenReemProduct extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        finish();
+       // finish();
     }
 
     @Override
@@ -111,6 +113,22 @@ public class FinalScreenReemProduct extends AppCompatActivity {
         super.onBackPressed();
         finish();
     }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        Log.e("permision", String.valueOf(requestCode));
+        if(requestCode==MY_PERMISSIONS_WRITE_EXTERNAL_STORAGE) {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // do what you want;
+                generatePDF(recyclerView);
+            }
+            else{
+                Toast.makeText(getApplicationContext(),"Sorry you denied permision",Toast.LENGTH_LONG).show();
+            }
+        }
+    }
+
 
 
     @Override
@@ -185,7 +203,7 @@ public class FinalScreenReemProduct extends AppCompatActivity {
         recyclerView.setAdapter(adapter);
 
 
-        create_pdf.setOnClickListener(new View.OnClickListener() {
+       /* create_pdf.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 //bitmap = loadBitmapFromView(recyclerView, recyclerView.getWidth(), recyclerView.getHeight());
@@ -218,7 +236,7 @@ public class FinalScreenReemProduct extends AppCompatActivity {
                     // Permission has already been granted
                 }
             }
-        });
+        });  */
 
 
 
@@ -271,10 +289,62 @@ backbutton.setOnClickListener(new View.OnClickListener() {
                                     runOnUiThread(new Runnable() {
                                         @Override
                                         public void run() {
-                                            Log.e("table deleted","yes");
+                                           /* Log.e("table deleted","yes");
                                             Intent intent = new Intent(FinalScreenReemProduct.this, MainActivity.class);
                                             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-                                            startActivity(intent);
+                                            startActivity(intent);*/
+
+                                            AlertDialog.Builder builder = new AlertDialog.Builder(FinalScreenReemProduct.this);
+                                            builder.setTitle("Do you want to Genrate PDF?")
+                                                    .setMessage(response.body().getMessage())
+                                                    .setIcon(android.R.drawable.btn_dialog)
+                                                    .setNegativeButton("Cancel",new DialogInterface.OnClickListener() {
+                                                        public void onClick(DialogInterface dialog, int whichButton) {
+                                                            Intent it=new Intent(FinalScreenReemProduct.this, SucessActivity.class);
+                                                            it.putExtra("openpdf","no");
+                                                            //i.putExtra("path",path);
+                                                            startActivity(it);
+                                                            //finish();
+                                                        }
+
+                                                    })
+                                                    .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                                                        public void onClick(DialogInterface dialog, int whichButton) {
+
+                                                           if (ContextCompat.checkSelfPermission(getApplicationContext(),
+                                                                    Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                                                                    != PackageManager.PERMISSION_GRANTED) {
+
+                                                                // Permission is not granted
+                                                                // Should we show an explanation?
+                                                                if (ActivityCompat.shouldShowRequestPermissionRationale(FinalScreenReemProduct.this,
+                                                                        Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+                                                                    // Show an explanation to the user *asynchronously* -- don't block
+                                                                    // this thread waiting for the user's response! After the user
+                                                                    // sees the explanation, try again to request the permission.
+                                                                } else {
+                                                                    Log.e("fhjfg","cvnbjcv");
+
+                                                                    askPermision();
+                                                                    // No explanation needed; request the permission
+                                                                    /*ActivityCompat.requestPermissions(FinalScreenReemProduct.this,
+                                                                            new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                                                                            MY_PERMISSIONS_WRITE_EXTERNAL_STORAGE);*/
+
+                                                                    // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
+                                                                    // app-defined int constant. The callback method gets the
+                                                                    // result of the request.
+                                                                }
+                                                            } else {
+                                                                generatePDF(recyclerView);
+                                                                //createPdf();
+                                                                // Permission has already been granted
+                                                            }
+
+
+                                                        }
+
+                                                    }).show();
                                         }
                                     });
                                     // Person person = mDb.personDao().loadPersonById(mPersonId);
@@ -319,7 +389,13 @@ backbutton.setOnClickListener(new View.OnClickListener() {
 
     }
 
-   // set here loading and creating functions
+    private void askPermision() {
+        ActivityCompat.requestPermissions(FinalScreenReemProduct.this,
+                new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                MY_PERMISSIONS_WRITE_EXTERNAL_STORAGE);
+    }
+
+    // set here loading and creating functions
    // exmple bitmap
    public  Bitmap loadBitmapFromView(View v, int width, int height) {
       // Bitmap b = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
@@ -543,12 +619,30 @@ public Bitmap getScreenshotFromRecyclerView(RecyclerView view) {
                 public void run() {
 
                     AlertDialog.Builder builder = new AlertDialog.Builder(FinalScreenReemProduct.this);
-                    builder.setTitle("Success")
+                    builder.setTitle("View Pdf")
                             .setMessage("PDF File Generated Successfully.")
                             .setIcon(android.R.drawable.ic_dialog_alert)
-                            .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                            .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialogInterface, int i) {
+                                    Intent it=new Intent(FinalScreenReemProduct.this,SucessActivity.class);
+                                    it.putExtra("openpdf","no");
+                                    //i.putExtra("path",path);
+                                    startActivity(it);
+                                    finish();
+                                }
+                            })
+                            .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                                 public void onClick(DialogInterface dialog, int whichButton) {
-                                    File file = new File(path+"/Real.pdf");
+
+
+                                    Intent i=new Intent(FinalScreenReemProduct.this,SucessActivity.class);
+                                    i.putExtra("openpdf","yes");
+                                    i.putExtra("screen","reem");
+                                    i.putExtra("path",path.toString());
+                                    startActivity(i);
+                                    finish();
+                                   /* File file = new File(path+"/Real.pdf");
                                     if (file.exists())
                                     {
                                         Intent intent=new Intent(Intent.ACTION_VIEW);
@@ -568,7 +662,7 @@ public Bitmap getScreenshotFromRecyclerView(RecyclerView view) {
                                         {
                                             Toast.makeText(FinalScreenReemProduct.this,  "No Application available to view pdf", Toast.LENGTH_LONG).show();
                                         }
-                                    }
+                                    }*/
                                 }
 
                             }).show();

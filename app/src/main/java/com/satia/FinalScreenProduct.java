@@ -91,8 +91,8 @@ public class FinalScreenProduct extends AppCompatActivity {
     Button scan;
     @BindView(R.id.finish)
     Button finish;
-    @BindView(R.id.create_pdf)
-    Button createPdf;
+   // @BindView(R.id.create_pdf)
+    //Button createPdf;
     @BindView(R.id.recyclerview)
     RecyclerView recyclerView;
 
@@ -126,7 +126,7 @@ ArrayList<Integer>uniquelist;
     @Override
     protected void onPause() {
         super.onPause();
-        finish();
+       // finish();
     }
 
     @Override
@@ -138,10 +138,11 @@ ArrayList<Integer>uniquelist;
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        Log.e("permision", String.valueOf(requestCode));
         if(requestCode==MY_PERMISSIONS_WRITE_EXTERNAL_STORAGE) {
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 // do what you want;
-                createPdf();
+                generatePDF(recyclerView);
             }
             else{
                 Toast.makeText(getApplicationContext(),"Sorry you denied permision",Toast.LENGTH_LONG).show();
@@ -171,7 +172,11 @@ ArrayList<Integer>uniquelist;
 
         Set<String> store = new HashSet<>();
 
+       // Log.e("listk",list.toString());
+
         for (int j=0;j<list.size();j++) {
+            Log.e("listk",list.get(j).getType().toString());
+
             if (store.add(list.get(j).getType()) == false) {
                 System.out.println("found a duplicate element in array : "
                         + String.valueOf(j));
@@ -188,19 +193,31 @@ ArrayList<Integer>uniquelist;
 
         for(int p=0;p<uniquelist.size();p++){
 
-            if(!indexlist.isEmpty()&&list.get(uniquelist.get(p)).getType().equals(list.get(indexlist.get(0)).getType())) {
+         tot=0.0;
+
+
+            if(!indexlist.isEmpty()) {
+               // if(list.get(uniquelist.get(p)).getType().equals(list.get(indexlist.get(p)).getType())
                 for (int g = 0; g < indexlist.size(); g++) {
-                    tot = tot + Double.parseDouble(list.get(indexlist.get(g)).getWeight().replaceAll("kg",""));
+                    if(list.get(uniquelist.get(p)).getType().matches(list.get(indexlist.get(g)).getType()))
+                    {
+                        tot = tot + Double.parseDouble(list.get(indexlist.get(g)).getPallet_weight().replaceAll("kg", ""));
+                        Log.e("check total:",String.valueOf(tot));
+                    }
                 }
-                double d=Double.parseDouble(list.get(uniquelist.get(p)).getWeight().replaceAll("kg",""))+tot;
+                double d=Double.parseDouble(list.get(uniquelist.get(p)).getPallet_weight().replaceAll("kg",""))+tot;
+                String dd=String.format("%.2f",d);
+                Log.e("d",String.valueOf(dd));
 
                 onlyshowModel=new OnlyshowModel(
                         list.get(uniquelist.get(p)).getType(),
                         list.get(uniquelist.get(p)).getGsm(),
                         list.get(uniquelist.get(p)).getLot_no(),
                         list.get(uniquelist.get(p)).getSize(),
-                        String.valueOf(d)+" kg",
-                        list.get(uniquelist.get(p)).getPallet_weight(),
+                        list.get(uniquelist.get(p)).getWeight(),
+                        //String.valueOf(Double.parseDouble(list.get(indexlist.get(p)).getWeight())+tot)+"kg",
+                        dd+" kg",
+
                         list.get(uniquelist.get(p)).getQuality());
                 onlyshowModelArrayList.add(onlyshowModel);
 
@@ -229,7 +246,7 @@ ArrayList<Integer>uniquelist;
             }
         });
 
-createPdf.setOnClickListener(new View.OnClickListener() {
+/*createPdf.setOnClickListener(new View.OnClickListener() {
 
     @Override
     public void onClick(View view) {
@@ -263,7 +280,7 @@ createPdf.setOnClickListener(new View.OnClickListener() {
         }
 
     }
-});
+});*/
 
 
 
@@ -306,9 +323,61 @@ createPdf.setOnClickListener(new View.OnClickListener() {
                                         @Override
                                         public void run() {
                                             Log.e("table deleted", "yes");
-                                            Intent intent = new Intent(FinalScreenProduct.this, MainActivity.class);
+                                           /* Intent intent = new Intent(FinalScreenProduct.this, MainActivity.class);
                                             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-                                            startActivity(intent);
+                                            startActivity(intent);*/
+                                            AlertDialog.Builder builder = new AlertDialog.Builder(FinalScreenProduct.this);
+                                            builder.setTitle("Do you want to Genrate PDF?")
+                                                    .setMessage(response.body().getMessage())
+                                                    .setIcon(android.R.drawable.btn_dialog)
+                                                    .setNegativeButton("Cancel",new DialogInterface.OnClickListener() {
+                                                        public void onClick(DialogInterface dialog, int whichButton) {
+                                                            Intent it=new Intent(FinalScreenProduct.this,SucessActivity.class);
+                                                            it.putExtra("openpdf","no");
+                                                            //i.putExtra("path",path);
+                                                            startActivity(it);
+                                                           // finish();
+                                                        }
+
+                                                    })
+                                                    .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                                                        public void onClick(DialogInterface dialog, int whichButton) {
+
+                                                            if (ContextCompat.checkSelfPermission(getApplicationContext(),
+                                                                    Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                                                                    != PackageManager.PERMISSION_GRANTED) {
+
+                                                                // Permission is not granted
+                                                                // Should we show an explanation?
+                                                                if (ActivityCompat.shouldShowRequestPermissionRationale(FinalScreenProduct.this,
+                                                                        Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+                                                                    // Show an explanation to the user *asynchronously* -- don't block
+                                                                    // this thread waiting for the user's response! After the user
+                                                                    // sees the explanation, try again to request the permission.
+                                                                } else {
+                                                                    // No explanation needed; request the permission
+                                                                    ActivityCompat.requestPermissions(FinalScreenProduct.this,
+                                                                            new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                                                                            MY_PERMISSIONS_WRITE_EXTERNAL_STORAGE);
+
+                                                                    // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
+                                                                    // app-defined int constant. The callback method gets the
+                                                                    // result of the request.
+                                                                }
+                                                            } else {
+                                                                generatePDF(recyclerView);
+                                                                //createPdf();
+                                                                // Permission has already been granted
+                                                            }
+
+
+                                                        }
+
+                                                    }).show();
+
+
+
+
                                         }
                                     });
                                     // Person person = mDb.personDao().loadPersonById(mPersonId);
@@ -647,12 +716,30 @@ createPdf.setOnClickListener(new View.OnClickListener() {
                 public void run() {
 
                     AlertDialog.Builder builder = new AlertDialog.Builder(FinalScreenProduct.this);
-                    builder.setTitle("Success")
+                    builder.setTitle("View PDf?")
                             .setMessage("PDF File Generated Successfully.")
                             .setIcon(android.R.drawable.ic_dialog_alert)
+                            .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialogInterface, int i) {
+                                    Intent it=new Intent(FinalScreenProduct.this,SucessActivity.class);
+                                    it.putExtra("openpdf","no");
+                                    //i.putExtra("path",path);
+                                    startActivity(it);
+                                    finish();
+                                }
+                            })
                             .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
                                 public void onClick(DialogInterface dialog, int whichButton) {
-                                    File file = new File(path+"/Sheet.pdf");
+
+                                    Intent i=new Intent(FinalScreenProduct.this,SucessActivity.class);
+                                    i.putExtra("openpdf","yes");
+                                    i.putExtra("screen","sheet");
+                                    i.putExtra("path",path.toString());
+                                    startActivity(i);
+                                    finish();
+
+                                   /* File file = new File(path+"/Sheet.pdf");
                                     if (file.exists())
                                     {
                                         Intent intent=new Intent(Intent.ACTION_VIEW);
@@ -672,7 +759,7 @@ createPdf.setOnClickListener(new View.OnClickListener() {
                                         {
                                             Toast.makeText(FinalScreenProduct.this,  "No Application available to view pdf", Toast.LENGTH_LONG).show();
                                         }
-                                    }
+                                    }*/
                                 }
 
                             }).show();
